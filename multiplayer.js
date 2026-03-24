@@ -26,6 +26,22 @@ class MultiplayerGame {
         this.selectedRaiseAmount = 20;
 
         this.setupUI();
+
+        // 页面刷新后尝试重连到之前的房间
+        const savedRoom = localStorage.getItem('zjh_room');
+        if (savedRoom) {
+            try {
+                const roomData = JSON.parse(savedRoom);
+                if (roomData.roomCode && roomData.username === this.currentUser.username) {
+                    this.roomCode = roomData.roomCode;
+                    document.getElementById('room-code-display').textContent = this.roomCode;
+                    this.showScreen('waiting-screen');
+                    this.waitLog('检测到未退出的房间，正在重新连接...');
+                    this.doRejoinRoom();
+                    return;
+                }
+            } catch (e) { localStorage.removeItem('zjh_room'); }
+        }
     }
 
     // ==================== UI 初始化 ====================
@@ -84,12 +100,18 @@ class MultiplayerGame {
         });
     }
 
+    clearRoomState() {
+        localStorage.removeItem('zjh_room');
+    }
+
     // ==================== 创建房间 ====================
     createRoom() {
         this.roomCode = this.genCode();
         this.isHost = true;
         this.conns = {};
         this.players = [{ username: this.currentUser.username, nickname: this.currentUser.nickname, chips: 1000, ready: false }];
+
+        localStorage.setItem('zjh_room', JSON.stringify({ roomCode: this.roomCode, username: this.currentUser.username }));
 
         document.getElementById('room-code-display').textContent = this.roomCode;
         this.showScreen('waiting-screen');
@@ -113,6 +135,8 @@ class MultiplayerGame {
         this.isHost = false;
         this.players = [{ username: this.currentUser.username, nickname: this.currentUser.nickname, chips: 1000, ready: false }];
 
+        localStorage.setItem('zjh_room', JSON.stringify({ roomCode: this.roomCode, username: this.currentUser.username }));
+
         document.getElementById('join-input-area').style.display = 'none';
         document.getElementById('room-code-display').textContent = code;
         this.showScreen('waiting-screen');
@@ -128,6 +152,47 @@ class MultiplayerGame {
         this.peer.on('error', (err) => {
             if (err.type === 'peer-unavailable') this.waitLog('找不到房间，请检查房间码');
             else this.waitLog('连接错误: ' + err.type);
+        });
+    }
+
+    // ==================== 重连房间 ====================
+    doRejoinRoom() {
+        this.isHost = false;
+        this.players = [{ username: this.currentUser.username, nickname: this.currentUser.nickname, chips: 1000, ready: false }];
+        this.renderWaitingPlayers();
+
+        this.peer = new Peer();
+        this.peer.on('open', () => {
+            const hostId = 'zjh-' + this.roomCode;
+            this.conn = this.peer.connect(hostId, { reliable: true });
+            this.setupRejoinConn(this.conn);
+        });
+        this.peer.on('error', (err) => {
+            this.clearRoomState();
+            if (err.type === 'peer-unavailable') {
+                this.waitLog('房间已关闭，即将返回登录...');
+            } else {
+                this.waitLog('重连错误: ' + err.type);
+            }
+            setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
+        });
+    }
+
+    setupRejoinConn(conn) {
+        conn.on('open', () => {
+            conn.send({ type: 'rejoin', player: this.currentUser });
+            this.waitLog('已连接，正在同步房间...');
+        });
+        conn.on('data', (msg) => this.onMessage(msg));
+        conn.on('close', () => {
+            this.clearRoomState();
+            this.waitLog('连接已断开');
+            setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
+        });
+        conn.on('error', () => {
+            this.clearRoomState();
+            this.waitLog('连接出错');
+            setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
         });
     }
 
@@ -154,7 +219,11 @@ class MultiplayerGame {
         conn.on('data', (msg) => {
             if (msg.type === 'join') {
                 const p = msg.player;
-                if (this.players.find(pl => pl.username === p.username)) return;
+                if (this.players.find(pl => pl.username === p.username)) {
+                    conn.send({ type: 'error', msg: '该用户名已在房间中' });
+                    conn.close();
+                    return;
+                }
                 if (this.players.length >= 5) { conn.send({ type: 'error', msg: '房间已满' }); return; }
 
                 this.players.push({ username: p.username, nickname: p.nickname, chips: 1000, ready: false });
@@ -170,6 +239,37 @@ class MultiplayerGame {
                 this.waitLog(`${p.nickname} 已加入 (${this.players.length}/5)`);
             }
 
+            if (msg.type === 'rejoin') {
+                const p = msg.player;
+                const existing = this.players.find(pl => pl.username === p.username);
+
+                if (!existing) {
+                    conn.send({ type: 'error', msg: '无法重连，你已不在房间中' });
+                    conn.close();
+                    return;
+                }
+
+                // 更新连接
+                this.conns[p.username] = conn;
+                conn.username = p.username;
+                existing.ready = false;
+
+                conn.send({ type: 'room_info', players: this.players });
+
+                if (this.gameState) {
+                    // 游戏进行中：从游戏状态恢复筹码
+                    const gsPlayer = this.gameState.players.find(gp => gp.username === p.username);
+                    if (gsPlayer) existing.chips = gsPlayer.chips;
+                    // 直接发送游戏状态，不广播 player_join 避免客户端消息冲突
+                    conn.send({ type: 'state', state: this.gameState });
+                } else {
+                    this.broadcastAll({ type: 'player_join', player: existing });
+                }
+
+                this.renderWaitingPlayers();
+                this.waitLog(`${p.nickname} 重新连接 (${this.players.length}/5)`);
+            }
+
             if (msg.type === 'ready') {
                 const p = this.players.find(pl => pl.username === msg.username);
                 if (p) { p.ready = msg.ready; this.broadcastAll({ type: 'player_ready', username: msg.username, ready: msg.ready }); this.renderWaitingPlayers(); }
@@ -183,14 +283,17 @@ class MultiplayerGame {
         conn.on('close', () => {
             const uname = conn.username;
             if (uname) {
-                const p = this.players.find(pl => pl.username === uname);
-                this.players = this.players.filter(pl => pl.username !== uname);
-                delete this.conns[uname];
-                if (p) {
-                    this.broadcastAll({ type: 'player_leave', username: uname, nickname: p.nickname });
-                    this.waitLog(`${p.nickname} 已离开 (${this.players.length}/5)`);
+                // 连接身份校验：仅当当前存储的连接确实是这个连接时才移除玩家
+                if (this.conns[uname] === conn) {
+                    const p = this.players.find(pl => pl.username === uname);
+                    this.players = this.players.filter(pl => pl.username !== uname);
+                    delete this.conns[uname];
+                    if (p) {
+                        this.broadcastAll({ type: 'player_leave', username: uname, nickname: p.nickname });
+                        this.waitLog(`${p.nickname} 已离开 (${this.players.length}/5)`);
+                    }
+                    this.renderWaitingPlayers();
                 }
-                this.renderWaitingPlayers();
             }
         });
     }
@@ -205,11 +308,15 @@ class MultiplayerGame {
         conn.on('data', (msg) => this.onMessage(msg));
 
         conn.on('close', () => {
+            this.clearRoomState();
             this.waitLog('与房主的连接已断开');
             setTimeout(() => this.disconnect(), 2000);
         });
 
-        conn.on('error', () => this.waitLog('连接出错'));
+        conn.on('error', () => {
+            this.clearRoomState();
+            this.waitLog('连接出错');
+        });
     }
 
     // ==================== 消息处理 ====================
@@ -255,6 +362,7 @@ class MultiplayerGame {
                 this.waitLog('房主正在准备新一局...');
                 break;
             case 'error':
+                this.clearRoomState();
                 this.waitLog(msg.msg);
                 break;
         }
@@ -504,6 +612,7 @@ class MultiplayerGame {
         if (this.peer) { try { this.peer.destroy(); } catch (e) {} }
         this.conn = null; this.conns = {}; this.peer = null;
         this.players = []; this.gameState = null;
+        this.clearRoomState();
         this.showScreen('setup-screen');
     }
 
