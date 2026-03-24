@@ -30,11 +30,6 @@
                 <div class="error-msg" id="error-msg"></div>
                 <button type="submit" class="login-btn">进入游戏</button>
             </form>
-            
-            <div class="test-accounts">
-                <h3>内测账号</h3>
-                <div class="account-list" id="account-list"></div>
-            </div>
         </div>
         
         <div class="info-bar">
@@ -51,21 +46,6 @@
             { username: 'player4', password: 'test123', nickname: '玩家四号' },
             { username: 'player5', password: 'test123', nickname: '玩家五号' }
         ];
-        
-        const accountList = document.getElementById('account-list');
-        testAccounts.forEach(acc => {
-            const item = document.createElement('div');
-            item.className = 'account-item';
-            item.innerHTML = `
-                <span class="acc-name">${acc.nickname}</span>
-                <span class="acc-info">${acc.username} / ${acc.password}</span>
-            `;
-            item.addEventListener('click', () => {
-                document.getElementById('username').value = acc.username;
-                document.getElementById('password').value = acc.password;
-            });
-            accountList.appendChild(item);
-        });
         
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
