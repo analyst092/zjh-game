@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炸金花 - 多人联机（内测）</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="login-container">
+        <a href="index.html" class="back-btn">&larr; 返回主页</a>
+        
+        <div class="login-card">
+            <div class="login-header">
+                <div class="lock-icon">🔐</div>
+                <h1>多人联机</h1>
+                <span class="beta-tag">内测版</span>
+                <p class="login-hint">请输入内测账号登录</p>
+            </div>
+            
+            <form id="login-form" class="login-form">
+                <div class="input-group">
+                    <label for="username">账号</label>
+                    <input type="text" id="username" placeholder="输入内测账号" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="输入密码">
+                </div>
+                <div class="error-msg" id="error-msg"></div>
+                <button type="submit" class="login-btn">进入游戏</button>
+            </form>
+            
+            <div class="test-accounts">
+                <h3>内测账号</h3>
+                <div class="account-list" id="account-list"></div>
+            </div>
+        </div>
+        
+        <div class="info-bar">
+            <span>🎯 支持跨设备联机对战</span>
+            <span>🔒 仅供内测体验</span>
+        </div>
+    </div>
+    
+    <script>
+        const testAccounts = [
+            { username: 'player1', password: 'test123', nickname: '玩家一号' },
+            { username: 'player2', password: 'test123', nickname: '玩家二号' },
+            { username: 'player3', password: 'test123', nickname: '玩家三号' },
+            { username: 'player4', password: 'test123', nickname: '玩家四号' },
+            { username: 'player5', password: 'test123', nickname: '玩家五号' }
+        ];
+        
+        const accountList = document.getElementById('account-list');
+        testAccounts.forEach(acc => {
+            const item = document.createElement('div');
+            item.className = 'account-item';
+            item.innerHTML = `
+                <span class="acc-name">${acc.nickname}</span>
+                <span class="acc-info">${acc.username} / ${acc.password}</span>
+            `;
+            item.addEventListener('click', () => {
+                document.getElementById('username').value = acc.username;
+                document.getElementById('password').value = acc.password;
+            });
+            accountList.appendChild(item);
+        });
+        
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+            
+            const account = testAccounts.find(a => a.username === username && a.password === password);
+            
+            if (account) {
+                localStorage.setItem('zjh_current_user', JSON.stringify({
+                    username: account.username,
+                    nickname: account.nickname
+                }));
+                window.location.href = 'multiplayer.html';
+            } else {
+                errorMsg.textContent = '账号或密码错误';
+                errorMsg.style.display = 'block';
+            }
+        });
+        
+        document.getElementById('username').addEventListener('input', () => {
+            document.getElementById('error-msg').style.display = 'none';
+        });
+        document.getElementById('password').addEventListener('input', () => {
+            document.getElementById('error-msg').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

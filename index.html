@@ -4,99 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>炸金花 - 网页版扑克牌游戏</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="landing.css">
 </head>
 <body>
-    <div class="container">
-        <h1>炸金花</h1>
+    <div class="bg-cards" id="bg-cards"></div>
+    
+    <div class="landing-container">
+        <div class="logo-area">
+            <div class="card-icon">
+                <span class="card-suit">♠</span>
+                <span class="card-suit heart">♥</span>
+            </div>
+            <h1 class="game-title">炸金花</h1>
+            <p class="game-subtitle">经典扑克牌游戏 · 网页版</p>
+        </div>
         
-        <!-- 筹码显示区域 -->
-        <div class="chips-area">
-            <div class="player-chips">
-                <h3>你的筹码</h3>
-                <div class="chip-display" id="player-chips">1000</div>
+        <div class="features">
+            <div class="feature-item">
+                <span class="feature-icon">🎴</span>
+                <span>经典玩法</span>
             </div>
-            <div class="pot-area">
-                <h3>当前底池</h3>
-                <div class="pot-display" id="pot-amount">0</div>
+            <div class="feature-item">
+                <span class="feature-icon">💰</span>
+                <span>筹码对战</span>
             </div>
-            <div class="dealer-chips">
-                <h3>庄家筹码</h3>
-                <div class="chip-display" id="dealer-chips">1000</div>
+            <div class="feature-item">
+                <span class="feature-icon">📱</span>
+                <span>随时随地</span>
             </div>
         </div>
         
-        <div class="game-area">
-            <div class="player-area" id="player-area">
-                <h2>你的手牌</h2>
-                <div class="cards" id="player-cards"></div>
-                <div class="hand-type" id="player-hand-type"></div>
-            </div>
-            <div class="dealer-area" id="dealer-area">
-                <h2>庄家手牌</h2>
-                <div class="cards" id="dealer-cards"></div>
-                <div class="hand-type" id="dealer-hand-type"></div>
+        <div class="mode-selection">
+            <a href="singleplayer.html" class="mode-btn single-player">
+                <div class="btn-icon">🎮</div>
+                <div class="btn-text">
+                    <span class="btn-title">单机游戏</span>
+                    <span class="btn-desc">与AI庄家对战</span>
+                </div>
+            </a>
+            
+            <a href="multiplayer-login.html" class="mode-btn multi-player">
+                <div class="btn-icon">👥</div>
+                <div class="btn-text">
+                    <span class="btn-title">多人联机</span>
+                    <span class="btn-desc">与好友一起玩</span>
+                </div>
+                <span class="beta-badge">内测版</span>
+            </a>
+        </div>
+        
+        <div class="game-rules">
+            <h3>游戏规则</h3>
+            <div class="rules-grid">
+                <div class="rule-card">
+                    <div class="rule-rank">1</div>
+                    <div class="rule-name">豹子</div>
+                    <div class="rule-desc">三张相同</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-rank">2</div>
+                    <div class="rule-name">同花顺</div>
+                    <div class="rule-desc">同花色顺子</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-rank">3</div>
+                    <div class="rule-name">同花</div>
+                    <div class="rule-desc">同花色三张</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-rank">4</div>
+                    <div class="rule-name">顺子</div>
+                    <div class="rule-desc">连续三张</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-rank">5</div>
+                    <div class="rule-name">对子</div>
+                    <div class="rule-desc">两张相同</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-rank">6</div>
+                    <div class="rule-name">单张</div>
+                    <div class="rule-desc">散牌</div>
+                </div>
             </div>
         </div>
         
-        <!-- 下注状态显示 -->
-        <div class="betting-status" id="betting-status">
-            <div class="status-item">
-                <span>本轮你已下注:</span>
-                <span id="player-round-bet">0</span>
-            </div>
-            <div class="status-item">
-                <span>本轮庄家已下注:</span>
-                <span id="dealer-round-bet">0</span>
-            </div>
-            <div class="status-item">
-                <span id="turn-indicator">点击"开始游戏"开始</span>
-            </div>
-        </div>
-        
-        <!-- 操作按钮区域 -->
-        <div class="action-area" id="action-area">
-            <button id="start-btn">开始游戏</button>
-            <button id="next-btn" style="display:none;">下一局</button>
-            <button id="call-btn" disabled>跟注</button>
-            <button id="raise-btn" disabled>加注</button>
-            <button id="check-btn" disabled>看牌</button>
-            <button id="fold-btn" disabled>弃牌</button>
-        </div>
-        
-        <div class="result" id="result"></div>
+        <footer class="footer">
+            <p>仅供娱乐 · 健康游戏</p>
+        </footer>
     </div>
     
-    <!-- 加注弹窗 -->
-    <div class="modal-overlay" id="raise-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>选择加注金额</h3>
-                <span class="modal-info">你还需要跟注: <span id="call-amount-display">0</span> 筹码</span>
-            </div>
-            <div class="modal-body">
-                <div class="raise-options">
-                    <button class="raise-option-btn" data-amount="20">+20</button>
-                    <button class="raise-option-btn" data-amount="50">+50</button>
-                    <button class="raise-option-btn" data-amount="100">+100</button>
-                    <button class="raise-option-btn" data-amount="200">+200</button>
-                </div>
-                <div class="raise-custom">
-                    <label for="custom-raise">自定义金额:</label>
-                    <input type="number" id="custom-raise" min="20" step="10" placeholder="输入金额">
-                </div>
-                <div class="raise-summary">
-                    <span>总计需要: <span id="total-raise-amount">0</span> 筹码</span>
-                    <span class="raise-note">（跟注 + 加注）</span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="confirm-raise-btn" class="modal-btn confirm">确认加注</button>
-                <button id="cancel-raise-btn" class="modal-btn cancel">取消</button>
-            </div>
-        </div>
-    </div>
-    
-    <script src="script.js"></script>
+    <script>
+        // 生成背景飘浮的扑克牌
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const bgCards = document.getElementById('bg-cards');
+        
+        for (let i = 0; i < 15; i++) {
+            const card = document.createElement('div');
+            card.className = 'floating-card';
+            card.textContent = values[Math.floor(Math.random() * values.length)] + suits[Math.floor(Math.random() * suits.length)];
+            card.style.left = Math.random() * 100 + '%';
+            card.style.top = Math.random() * 100 + '%';
+            card.style.animationDelay = Math.random() * 5 + 's';
+            card.style.animationDuration = (8 + Math.random() * 10) + 's';
+            card.style.fontSize = (1.2 + Math.random() * 1.5) + 'em';
+            card.style.opacity = 0.06 + Math.random() * 0.08;
+            bgCards.appendChild(card);
+        }
+    </script>
 </body>
 </html>

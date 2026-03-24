@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炸金花 - 单机模式</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="back-link">
+        <a href="index.html">&larr; 返回主页</a>
+    </div>
+    <div class="container">
+        <h1>炸金花</h1>
+        
+        <!-- 筹码显示区域 -->
+        <div class="chips-area">
+            <div class="player-chips">
+                <h3>你的筹码</h3>
+                <div class="chip-display" id="player-chips">1000</div>
+            </div>
+            <div class="pot-area">
+                <h3>当前底池</h3>
+                <div class="pot-display" id="pot-amount">0</div>
+            </div>
+            <div class="dealer-chips">
+                <h3>庄家筹码</h3>
+                <div class="chip-display" id="dealer-chips">1000</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="player-area" id="player-area">
+                <h2>你的手牌</h2>
+                <div class="cards" id="player-cards"></div>
+                <div class="hand-type" id="player-hand-type"></div>
+            </div>
+            <div class="dealer-area" id="dealer-area">
+                <h2>庄家手牌</h2>
+                <div class="cards" id="dealer-cards"></div>
+                <div class="hand-type" id="dealer-hand-type"></div>
+            </div>
+        </div>
+        
+        <!-- 下注状态显示 -->
+        <div class="betting-status" id="betting-status">
+            <div class="status-item">
+                <span>本轮你已下注:</span>
+                <span id="player-round-bet">0</span>
+            </div>
+            <div class="status-item">
+                <span>本轮庄家已下注:</span>
+                <span id="dealer-round-bet">0</span>
+            </div>
+            <div class="status-item">
+                <span id="turn-indicator">点击"开始游戏"开始</span>
+            </div>
+        </div>
+        
+        <!-- 操作按钮区域 -->
+        <div class="action-area" id="action-area">
+            <button id="start-btn">开始游戏</button>
+            <button id="next-btn" style="display:none;">下一局</button>
+            <button id="call-btn" disabled>跟注</button>
+            <button id="raise-btn" disabled>加注</button>
+            <button id="check-btn" disabled>看牌</button>
+            <button id="fold-btn" disabled>弃牌</button>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+    
+    <!-- 加注弹窗 -->
+    <div class="modal-overlay" id="raise-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>选择加注金额</h3>
+                <span class="modal-info">你还需要跟注: <span id="call-amount-display">0</span> 筹码</span>
+            </div>
+            <div class="modal-body">
+                <div class="raise-options">
+                    <button class="raise-option-btn" data-amount="20">+20</button>
+                    <button class="raise-option-btn" data-amount="50">+50</button>
+                    <button class="raise-option-btn" data-amount="100">+100</button>
+                    <button class="raise-option-btn" data-amount="200">+200</button>
+                </div>
+                <div class="raise-custom">
+                    <label for="custom-raise">自定义金额:</label>
+                    <input type="number" id="custom-raise" min="20" step="10" placeholder="输入金额">
+                </div>
+                <div class="raise-summary">
+                    <span>总计需要: <span id="total-raise-amount">0</span> 筹码</span>
+                    <span class="raise-note">（跟注 + 加注）</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-raise-btn" class="modal-btn confirm">确认加注</button>
+                <button id="cancel-raise-btn" class="modal-btn cancel">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

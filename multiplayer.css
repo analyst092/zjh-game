@@ -1,0 +1,264 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0a1628, #1a2a4a, #0d2137);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+}
+
+.screen { min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
+.back-btn { display: inline-block; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.9em; margin-bottom: 15px; transition: color 0.3s; }
+.back-btn:hover { color: #ffd700; }
+
+/* ====== 设置界面 ====== */
+.setup-container { max-width: 440px; width: 100%; padding-top: 20px; }
+.setup-header { text-align: center; margin-bottom: 35px; }
+.setup-header h1 { color: #ffd700; font-size: 2em; letter-spacing: 3px; margin-bottom: 10px; }
+.user-info { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 6px 16px; border-radius: 20px; }
+.user-name { color: #ffd700; font-weight: bold; }
+.setup-actions { margin-bottom: 25px; }
+
+.setup-btn {
+    width: 100%; display: flex; align-items: center; padding: 20px;
+    border-radius: 14px; border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04); cursor: pointer;
+    transition: all 0.3s; color: #fff; font-family: inherit; text-align: left;
+}
+.setup-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.create-btn { border-color: rgba(40,167,69,0.4); }
+.create-btn:hover { border-color: rgba(40,167,69,0.8); background: rgba(40,167,69,0.1); }
+.join-btn { border-color: rgba(255,193,7,0.4); }
+.join-btn:hover { border-color: rgba(255,193,7,0.8); background: rgba(255,193,7,0.1); }
+.btn-icon { font-size: 2em; margin-right: 16px; flex-shrink: 0; }
+.btn-label { font-size: 1.15em; font-weight: bold; margin-bottom: 4px; }
+.btn-desc { font-size: 0.85em; color: rgba(255,255,255,0.45); }
+
+.divider { text-align: center; color: rgba(255,255,255,0.25); margin: 18px 0; position: relative; }
+.divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: rgba(255,255,255,0.1); }
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+.join-input-area { display: flex; gap: 10px; margin-top: 12px; }
+.join-input-area input {
+    flex: 1; padding: 14px; font-size: 1.3em; text-align: center;
+    letter-spacing: 8px; font-weight: bold;
+    border: 2px solid rgba(255,215,0,0.4); border-radius: 12px;
+    background: rgba(0,0,0,0.3); color: #ffd700;
+    text-transform: uppercase; font-family: 'Consolas', monospace;
+}
+.join-input-area input:focus { outline: none; border-color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.2); }
+.do-join-btn {
+    padding: 14px 24px; background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #1a1a2e; border: none; border-radius: 12px;
+    font-size: 1.05em; font-weight: bold; cursor: pointer; font-family: inherit; transition: all 0.3s;
+}
+.do-join-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,215,0,0.4); }
+.setup-tips { text-align: center; color: rgba(255,255,255,0.3); font-size: 0.85em; line-height: 1.6; }
+
+/* ====== 等待界面 ====== */
+.waiting-container { max-width: 500px; width: 100%; text-align: center; padding-top: 20px; }
+.waiting-header { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 20px; }
+.waiting-header h2 { color: rgba(255,255,255,0.8); font-size: 1.4em; }
+.player-count-badge {
+    background: rgba(255,215,0,0.15); color: #ffd700; font-weight: bold;
+    padding: 4px 14px; border-radius: 12px; font-size: 0.9em;
+    border: 1px solid rgba(255,215,0,0.3);
+}
+
+.room-code-box {
+    background: rgba(255,215,0,0.06); border: 2px solid rgba(255,215,0,0.25);
+    border-radius: 16px; padding: 20px; margin-bottom: 20px;
+}
+.code-label { color: rgba(255,255,255,0.4); font-size: 0.8em; margin-bottom: 6px; letter-spacing: 3px; }
+.code-value { color: #ffd700; font-size: 2.8em; font-weight: bold; font-family: 'Consolas', monospace; letter-spacing: 10px; text-shadow: 0 0 20px rgba(255,215,0,0.3); }
+.code-hint { color: rgba(255,255,255,0.3); font-size: 0.75em; margin-top: 6px; }
+
+/* 等待室玩家槽位 */
+.waiting-slots { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
+
+.w-slot {
+    background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 12px 16px; min-width: 110px; text-align: center; transition: all 0.3s;
+}
+.w-slot.occupied { border-color: rgba(255,215,0,0.25); background: rgba(255,215,0,0.04); }
+.w-slot.ready { border-color: rgba(40,167,69,0.5); background: rgba(40,167,69,0.08); }
+.w-slot.empty { opacity: 0.3; border-style: dashed; }
+.w-slot-name { font-weight: bold; font-size: 0.95em; margin-bottom: 4px; }
+.w-slot-chips { font-size: 0.8em; color: #ffd700; margin-bottom: 4px; }
+.w-slot-ready { font-size: 0.75em; color: rgba(255,255,255,0.4); }
+.w-slot-ready.yes { color: #28a745; font-weight: bold; }
+
+.host-hint { color: rgba(255,215,0,0.5); font-size: 0.8em; margin-bottom: 10px; }
+.waiting-log { color: rgba(255,255,255,0.5); font-size: 0.9em; margin-bottom: 18px; min-height: 22px; }
+
+.waiting-actions { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+
+.ready-btn {
+    padding: 12px 45px; font-size: 1.1em; font-weight: bold;
+    background: linear-gradient(135deg, #28a745, #218838); color: white;
+    border: none; border-radius: 25px; cursor: pointer; transition: all 0.3s; font-family: inherit;
+}
+.ready-btn.is-ready { background: linear-gradient(135deg, #6c757d, #5a6268); }
+.ready-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(40,167,69,0.4); }
+
+.start-mp-btn {
+    padding: 14px 40px; font-size: 1.1em; font-weight: bold;
+    background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e;
+    border: none; border-radius: 25px; cursor: pointer; transition: all 0.3s; font-family: inherit;
+}
+.start-mp-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,215,0,0.4); }
+.start-mp-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+
+.cancel-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.4);
+    padding: 8px 20px; border-radius: 15px; cursor: pointer; font-size: 0.9em; transition: all 0.3s; font-family: inherit;
+}
+.cancel-btn:hover { border-color: #ff4757; color: #ff4757; }
+
+/* ====== 游戏界面 ====== */
+.game-screen { flex-direction: column; padding: 10px; }
+
+.game-top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 15px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-bottom: 10px; flex-shrink: 0;
+}
+.game-room-label { color: rgba(255,255,255,0.5); font-size: 0.85em; }
+.pot-display { color: rgba(255,255,255,0.7); font-size: 0.95em; }
+.pot-display strong { color: #ffd700; font-size: 1.2em; }
+.disconnect-btn {
+    background: none; border: 1px solid rgba(220,53,69,0.4); color: rgba(220,53,69,0.7);
+    padding: 4px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8em; transition: all 0.3s; font-family: inherit;
+}
+.disconnect-btn:hover { border-color: #dc3545; color: #dc3545; }
+
+/* 扑克桌 */
+.poker-table {
+    flex: 1; position: relative; min-height: 380px; max-height: 500px;
+    margin: 0 auto; width: 100%; max-width: 700px;
+}
+
+.table-surface {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 75%; height: 58%;
+    background: radial-gradient(ellipse, #1a5c36, #14502c 40%, #0e3d21);
+    border-radius: 50%; border: 4px solid #3a2a1a;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.4), 0 0 30px rgba(0,0,0,0.5);
+    display: flex; justify-content: center; align-items: center;
+}
+.table-logo { color: rgba(255,215,0,0.15); font-size: 1.8em; font-weight: bold; letter-spacing: 8px; }
+
+/* 5个座位位置 */
+.seat { position: absolute; width: 140px; text-align: center; transition: all 0.4s; z-index: 2; }
+#seat-0 { left: 50%; bottom: 0; transform: translateX(-50%); }
+#seat-1 { left: 2%; top: 55%; transform: translate(-50%, -50%); }
+#seat-2 { left: 8%; top: 15%; transform: translate(-50%, -50%); }
+#seat-3 { right: -2%; top: 15%; transform: translate(50%, -50%); }
+#seat-4 { right: -8%; top: 55%; transform: translate(50%, -50%); }
+
+.seat-card {
+    background: rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 10px 8px; backdrop-filter: blur(5px); transition: all 0.3s;
+}
+.seat-card.active { border-color: rgba(255,215,0,0.6); box-shadow: 0 0 20px rgba(255,215,0,0.2); }
+.seat-card.folded { opacity: 0.4; border-color: rgba(220,53,69,0.3); }
+.seat-card.winner { border-color: rgba(40,167,69,0.8); box-shadow: 0 0 20px rgba(40,167,69,0.3); }
+
+.seat-name { font-size: 0.85em; font-weight: bold; color: #fff; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seat-chips { font-size: 0.72em; color: #ffd700; margin-bottom: 6px; }
+
+.seat-cards { display: flex; justify-content: center; gap: 4px; min-height: 48px; margin-bottom: 5px; }
+.seat-mini-card {
+    width: 30px; height: 44px; background: white; border: 1px solid #333; border-radius: 4px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 0.6em; font-weight: bold; line-height: 1;
+}
+.seat-mini-card.card-back { background: linear-gradient(135deg, #1a1a2e, #16213e); border-color: #ffd700; }
+.seat-mini-card .mini-suit { font-size: 1.4em; }
+.seat-mini-card.red { color: #dc3545; }
+.seat-mini-card.black { color: #212529; }
+
+.seat-status { font-size: 0.7em; padding: 2px 8px; border-radius: 8px; display: inline-block; }
+.seat-status.betting { background: rgba(255,193,7,0.2); color: #ffc107; }
+.seat-status.checked { background: rgba(108,117,125,0.2); color: #6c757d; }
+.seat-status.called { background: rgba(23,162,184,0.2); color: #17a2b8; }
+.seat-status.raised { background: rgba(255,193,7,0.3); color: #ffc107; }
+.seat-status.folded-status { background: rgba(220,53,69,0.2); color: #dc3545; }
+.seat-status.winner-status { background: rgba(40,167,69,0.3); color: #28a745; }
+.seat-hand-type { font-size: 0.7em; color: rgba(255,255,255,0.6); margin-top: 3px; }
+
+/* 游戏控制 */
+.game-controls { flex-shrink: 0; padding: 10px 0; }
+.control-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.ctrl-btn {
+    padding: 10px 22px; font-size: 0.95em; font-weight: bold; border: none; border-radius: 20px;
+    cursor: pointer; transition: all 0.3s; font-family: inherit; min-width: 80px;
+}
+.ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-next { background: linear-gradient(135deg, #17a2b8, #138496); color: white; }
+.btn-check { background: linear-gradient(135deg, #6c757d, #5a6268); color: white; }
+.btn-call { background: linear-gradient(135deg, #17a2b8, #138496); color: white; }
+.btn-raise { background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529; }
+.btn-fold { background: linear-gradient(135deg, #dc3545, #c82333); color: white; }
+
+.turn-indicator {
+    text-align: center; color: rgba(255,215,0,0.8); font-size: 0.9em; padding: 6px;
+    background: rgba(255,215,0,0.08); border-radius: 15px; border: 1px solid rgba(255,215,0,0.15);
+}
+
+.game-log {
+    flex-shrink: 0; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 8px 12px; max-height: 80px; overflow-y: auto;
+    font-size: 0.8em; color: rgba(255,255,255,0.45); margin-top: 5px;
+}
+.game-log .log-entry { padding: 2px 0; }
+.log-time { color: rgba(255,255,255,0.3); margin-right: 8px; }
+
+/* 结算弹窗 */
+.result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; display: flex; justify-content: center; align-items: center; }
+.result-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 2px solid #ffd700; border-radius: 20px; padding: 35px; text-align: center; max-width: 380px; width: 90%; }
+.result-card h2 { color: #ffd700; font-size: 1.8em; margin-bottom: 12px; }
+.result-card p { color: rgba(255,255,255,0.7); margin-bottom: 20px; line-height: 1.5; }
+.result-close-btn { padding: 12px 35px; background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e; border: none; border-radius: 20px; font-size: 1.05em; font-weight: bold; cursor: pointer; font-family: inherit; }
+
+/* 加注弹窗 */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; justify-content: center; align-items: center; }
+.modal-overlay.active { display: flex; }
+.modal-content { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 15px; padding: 25px; max-width: 360px; width: 90%; border: 2px solid #ffd700; }
+.modal-header { text-align: center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,215,0,0.2); }
+.modal-header h3 { color: #ffd700; font-size: 1.3em; margin-bottom: 6px; }
+.modal-info { color: #aaa; font-size: 0.9em; }
+.modal-info span { color: #ffc107; font-weight: bold; }
+.raise-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+.raise-option-btn { padding: 14px; font-size: 1.05em; font-weight: bold; background: linear-gradient(135deg, #e94560, #c23a3a); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; }
+.raise-option-btn.selected { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e; }
+.raise-custom { margin-bottom: 12px; }
+.raise-custom input { width: 100%; padding: 12px; font-size: 1em; border: 2px solid #ffd700; border-radius: 8px; background: rgba(0,0,0,0.3); color: white; text-align: center; font-family: inherit; }
+.raise-custom input:focus { outline: none; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+.raise-custom input::placeholder { color: #555; }
+.raise-summary { text-align: center; color: rgba(255,255,255,0.7); padding: 10px; background: rgba(255,215,0,0.08); border-radius: 8px; margin-bottom: 15px; }
+.raise-summary span { color: #ffd700; font-weight: bold; font-size: 1.2em; }
+.modal-footer { display: flex; gap: 12px; justify-content: center; }
+.modal-btn { padding: 10px 28px; font-size: 1em; font-weight: bold; border: none; border-radius: 20px; cursor: pointer; font-family: inherit; }
+.modal-btn.confirm { background: linear-gradient(135deg, #28a745, #218838); color: white; }
+.modal-btn.cancel { background: linear-gradient(135deg, #6c757d, #5a6268); color: white; }
+
+/* ====== 响应式 ====== */
+@media (max-width: 600px) {
+    .setup-header h1 { font-size: 1.6em; }
+    .btn-icon { font-size: 1.6em; margin-right: 12px; }
+    .code-value { font-size: 2.2em; letter-spacing: 6px; }
+    .w-slot { min-width: 90px; padding: 10px 12px; }
+    .seat { width: 110px; }
+    .seat-mini-card { width: 24px; height: 36px; font-size: 0.55em; }
+    .seat-name { font-size: 0.75em; }
+    .seat-chips { font-size: 0.65em; }
+    .ctrl-btn { padding: 8px 16px; font-size: 0.85em; min-width: 65px; }
+}
+
+@media (max-width: 400px) {
+    .seat { width: 95px; }
+    .poker-table { min-height: 320px; }
+    .table-logo { font-size: 1.2em; letter-spacing: 4px; }
+}

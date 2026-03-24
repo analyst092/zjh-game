@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>炸金花 - 多人联机</title>
+    <link rel="stylesheet" href="multiplayer.css">
+</head>
+<body>
+
+    <!-- 界面1：创建/加入房间 -->
+    <div class="screen setup-screen" id="setup-screen">
+        <div class="setup-container">
+            <a href="index.html" class="back-btn">&larr; 返回主页</a>
+            <div class="setup-header">
+                <h1>🃏 多人联机</h1>
+                <div class="user-info">
+                    <span>👤</span>
+                    <span class="user-name" id="current-nickname"></span>
+                </div>
+            </div>
+            <div class="setup-actions">
+                <button class="setup-btn create-btn" id="btn-create-room">
+                    <span class="btn-icon">🏠</span>
+                    <div><div class="btn-label">创建房间</div><div class="btn-desc">生成房间码，分享给好友</div></div>
+                </button>
+                <div class="divider"><span>或</span></div>
+                <div class="join-area">
+                    <button class="setup-btn join-btn" id="btn-join-room">
+                        <span class="btn-icon">🚪</span>
+                        <div><div class="btn-label">加入房间</div><div class="btn-desc">输入房间码加入对战</div></div>
+                    </button>
+                    <div class="join-input-area" id="join-input-area" style="display:none;">
+                        <input type="text" id="join-code-input" placeholder="房间码" maxlength="4" autocomplete="off">
+                        <button class="do-join-btn" id="btn-do-join">加入</button>
+                    </div>
+                </div>
+            </div>
+            <div class="setup-tips">
+                <p>💡 支持 3~5 人跨设备联机 · 一方创建房间，其他人输入房间码加入</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 界面2：等待室 -->
+    <div class="screen waiting-screen" id="waiting-screen" style="display:none;">
+        <div class="waiting-container">
+            <div class="waiting-header">
+                <h2>等待室</h2>
+                <span class="player-count-badge" id="player-count-text">1/5</span>
+            </div>
+
+            <div class="room-code-box">
+                <div class="code-label">房间码</div>
+                <div class="code-value" id="room-code-display">----</div>
+                <div class="code-hint">分享此码给好友</div>
+            </div>
+
+            <div class="waiting-slots" id="waiting-slots"></div>
+
+            <div class="host-hint" id="host-hint" style="display:none;">
+                你是房主 · 所有人准备后可开始游戏
+            </div>
+
+            <div class="waiting-log" id="waiting-log">准备中...</div>
+
+            <div class="waiting-actions">
+                <button class="ready-btn" id="btn-ready">准备就绪</button>
+                <button class="start-mp-btn" id="btn-start-mp" disabled>开始游戏（至少3人）</button>
+                <button class="cancel-btn" id="btn-cancel-wait">离开</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 界面3：游戏 -->
+    <div class="screen game-screen" id="game-screen" style="display:none;">
+        <div class="game-top-bar">
+            <span class="game-room-label">多人联机</span>
+            <span class="pot-display">底池: <strong id="pot-amount">0</strong></span>
+            <button class="disconnect-btn" id="btn-disconnect">断开</button>
+        </div>
+
+        <div class="poker-table">
+            <div class="table-surface">
+                <div class="table-logo">炸金花</div>
+            </div>
+            <div class="seat" id="seat-0"></div>
+            <div class="seat" id="seat-1"></div>
+            <div class="seat" id="seat-2"></div>
+            <div class="seat" id="seat-3"></div>
+            <div class="seat" id="seat-4"></div>
+        </div>
+
+        <div class="game-controls">
+            <div class="control-row">
+                <button class="ctrl-btn btn-next" id="btn-next-round" style="display:none;">下一局</button>
+            </div>
+            <div class="control-row play-actions">
+                <button class="ctrl-btn btn-check" id="btn-check" disabled>看牌</button>
+                <button class="ctrl-btn btn-call" id="btn-call" disabled>跟注</button>
+                <button class="ctrl-btn btn-raise" id="btn-raise" disabled>加注</button>
+                <button class="ctrl-btn btn-fold" id="btn-fold" disabled>弃牌</button>
+            </div>
+            <div class="turn-indicator" id="turn-indicator">等待开始...</div>
+        </div>
+
+        <div class="game-log" id="game-log"></div>
+
+        <div class="result-overlay" id="result-overlay" style="display:none;">
+            <div class="result-card">
+                <h2 id="result-title"></h2>
+                <p id="result-detail"></p>
+                <button class="result-close-btn" id="result-close-btn">继续</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加注弹窗 -->
+    <div class="modal-overlay" id="raise-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>选择加注金额</h3>
+                <span class="modal-info">当前需跟注: <span id="call-amount-display">0</span></span>
+            </div>
+            <div class="modal-body">
+                <div class="raise-options">
+                    <button class="raise-option-btn" data-amount="20">+20</button>
+                    <button class="raise-option-btn" data-amount="50">+50</button>
+                    <button class="raise-option-btn" data-amount="100">+100</button>
+                    <button class="raise-option-btn" data-amount="200">+200</button>
+                </div>
+                <div class="raise-custom">
+                    <input type="number" id="custom-raise" min="20" step="10" placeholder="自定义金额">
+                </div>
+                <div class="raise-summary">总计: <span id="total-raise-amount">0</span> 筹码</div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-raise-btn" class="modal-btn confirm">确认</button>
+                <button id="cancel-raise-btn" class="modal-btn cancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="multiplayer.js"></script>
+</body>
+</html>

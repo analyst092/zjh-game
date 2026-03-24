@@ -4,6 +4,28 @@
     box-sizing: border-box;
 }
 
+.back-link {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+}
+
+.back-link a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 0.9em;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: all 0.3s;
+}
+
+.back-link a:hover {
+    color: #ffd700;
+    background: rgba(0, 0, 0, 0.5);
+}
+
 body {
     font-family: 'Microsoft YaHei', sans-serif;
     background: linear-gradient(135deg, #2c5f2d, #97bc62);
