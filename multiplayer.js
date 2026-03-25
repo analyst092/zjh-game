@@ -163,6 +163,16 @@ class MultiplayerGame {
         this.conn = this.peer.connect(hostId, { reliable: true });
         this.setupClientConn(this.conn);
 
+        // 监听连接级别的错误（如peer-unavailable）
+        this.conn.on('error', (err) => {
+            console.log('连接错误:', err);
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
+            this.handleJoinRetry();
+        });
+
         // 设置连接超时
         this.joinTimeout = setTimeout(() => {
             if (this.conn && !this.conn.open) {
@@ -213,6 +223,16 @@ class MultiplayerGame {
         this.conn = this.peer.connect(hostId, { reliable: true });
         this.setupRejoinConn(this.conn);
 
+        // 监听连接级别的错误
+        this.conn.on('error', (err) => {
+            console.log('重连错误:', err);
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
+            this.handleRejoinRetry();
+        });
+
         // 设置连接超时
         this.joinTimeout = setTimeout(() => {
             if (this.conn && !this.conn.open) {
@@ -251,15 +271,6 @@ class MultiplayerGame {
             }
             this.clearRoomState();
             this.waitLog('连接已断开');
-            setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
-        });
-        conn.on('error', () => {
-            if (this.joinTimeout) {
-                clearTimeout(this.joinTimeout);
-                this.joinTimeout = null;
-            }
-            this.clearRoomState();
-            this.waitLog('连接出错');
             setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
         });
     }
@@ -413,15 +424,6 @@ class MultiplayerGame {
             this.clearRoomState();
             this.waitLog('与房主的连接已断开');
             setTimeout(() => this.disconnect(), 2000);
-        });
-
-        conn.on('error', () => {
-            if (this.joinTimeout) {
-                clearTimeout(this.joinTimeout);
-                this.joinTimeout = null;
-            }
-            this.clearRoomState();
-            this.waitLog('连接出错');
         });
     }
 
