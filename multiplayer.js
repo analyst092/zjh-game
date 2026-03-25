@@ -110,6 +110,7 @@ class MultiplayerGame {
         this.isHost = true;
         this.conns = {};
         this.players = [{ username: this.currentUser.username, nickname: this.currentUser.nickname, chips: 1000, ready: false }];
+        this.roomReady = false;
 
         localStorage.setItem('zjh_room', JSON.stringify({ roomCode: this.roomCode, username: this.currentUser.username }));
 
@@ -134,6 +135,9 @@ class MultiplayerGame {
         this.roomCode = code;
         this.isHost = false;
         this.players = [{ username: this.currentUser.username, nickname: this.currentUser.nickname, chips: 1000, ready: false }];
+        this.joinRetryCount = 0;
+        this.joinMaxRetries = 3;
+        this.joinRetryDelay = 2000;
 
         localStorage.setItem('zjh_room', JSON.stringify({ roomCode: this.roomCode, username: this.currentUser.username }));
 
@@ -145,9 +149,8 @@ class MultiplayerGame {
 
         this.peer = new Peer();
         this.peer.on('open', () => {
-            const hostId = 'zjh-' + this.roomCode;
-            this.conn = this.peer.connect(hostId, { reliable: true });
-            this.setupClientConn(this.conn);
+            this.waitLog('已连接到服务器，正在查找房间...');
+            setTimeout(() => this.attemptJoinRoom(), 1000);
         });
         this.peer.on('error', (err) => {
             if (err.type === 'peer-unavailable') this.waitLog('找不到房间，请检查房间码');
@@ -155,17 +158,44 @@ class MultiplayerGame {
         });
     }
 
+    attemptJoinRoom() {
+        const hostId = 'zjh-' + this.roomCode;
+        this.conn = this.peer.connect(hostId, { reliable: true });
+        this.setupClientConn(this.conn);
+
+        // 设置连接超时
+        this.joinTimeout = setTimeout(() => {
+            if (this.conn && !this.conn.open) {
+                this.conn.close();
+                this.handleJoinRetry();
+            }
+        }, 5000);
+    }
+
+    handleJoinRetry() {
+        this.joinRetryCount++;
+        if (this.joinRetryCount <= this.joinMaxRetries) {
+            this.waitLog(`连接超时，正在重试 (${this.joinRetryCount}/${this.joinMaxRetries})...`);
+            setTimeout(() => this.attemptJoinRoom(), this.joinRetryDelay);
+        } else {
+            this.waitLog('无法连接到房间，请检查房间码或网络连接');
+            this.clearRoomState();
+        }
+    }
+
     // ==================== 重连房间 ====================
     doRejoinRoom() {
         this.isHost = false;
         this.players = [{ username: this.currentUser.username, nickname: this.currentUser.nickname, chips: 1000, ready: false }];
+        this.joinRetryCount = 0;
+        this.joinMaxRetries = 3;
+        this.joinRetryDelay = 2000;
         this.renderWaitingPlayers();
 
         this.peer = new Peer();
         this.peer.on('open', () => {
-            const hostId = 'zjh-' + this.roomCode;
-            this.conn = this.peer.connect(hostId, { reliable: true });
-            this.setupRejoinConn(this.conn);
+            this.waitLog('已连接到服务器，正在重连房间...');
+            setTimeout(() => this.attemptRejoinRoom(), 1000);
         });
         this.peer.on('error', (err) => {
             this.clearRoomState();
@@ -178,18 +208,56 @@ class MultiplayerGame {
         });
     }
 
+    attemptRejoinRoom() {
+        const hostId = 'zjh-' + this.roomCode;
+        this.conn = this.peer.connect(hostId, { reliable: true });
+        this.setupRejoinConn(this.conn);
+
+        // 设置连接超时
+        this.joinTimeout = setTimeout(() => {
+            if (this.conn && !this.conn.open) {
+                this.conn.close();
+                this.handleRejoinRetry();
+            }
+        }, 5000);
+    }
+
+    handleRejoinRetry() {
+        this.joinRetryCount++;
+        if (this.joinRetryCount <= this.joinMaxRetries) {
+            this.waitLog(`重连超时，正在重试 (${this.joinRetryCount}/${this.joinMaxRetries})...`);
+            setTimeout(() => this.attemptRejoinRoom(), this.joinRetryDelay);
+        } else {
+            this.waitLog('无法重连到房间，即将返回登录...');
+            this.clearRoomState();
+            setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
+        }
+    }
+
     setupRejoinConn(conn) {
         conn.on('open', () => {
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
             conn.send({ type: 'rejoin', player: this.currentUser });
             this.waitLog('已连接，正在同步房间...');
         });
         conn.on('data', (msg) => this.onMessage(msg));
         conn.on('close', () => {
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
             this.clearRoomState();
             this.waitLog('连接已断开');
             setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
         });
         conn.on('error', () => {
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
             this.clearRoomState();
             this.waitLog('连接出错');
             setTimeout(() => { window.location.href = 'multiplayer-login.html'; }, 2000);
@@ -199,21 +267,47 @@ class MultiplayerGame {
     // ==================== PeerJS：房主 ====================
     initPeer(peerId) {
         this.peer = new Peer(peerId);
-        this.peer.on('open', () => this.waitLog('房间已创建，等待玩家加入...'));
+        this.peer.on('open', (id) => {
+            console.log('房主Peer已创建，ID:', id);
+            this.waitLog('房间已创建，等待玩家加入...');
+            // 标记房间已完全就绪
+            this.roomReady = true;
+        });
         this.peer.on('connection', (conn) => this.setupHostConn(conn));
         this.peer.on('error', (err) => {
+            console.error('房主Peer错误:', err);
             if (err.type === 'unavailable-id') {
-                this.waitLog('房间码冲突，请重试');
-                setTimeout(() => this.disconnect(), 2000);
+                this.waitLog('房间码冲突，正在重新生成...');
+                // 自动生成新的房间码重试
+                setTimeout(() => {
+                    this.roomCode = this.genCode();
+                    document.getElementById('room-code-display').textContent = this.roomCode;
+                    localStorage.setItem('zjh_room', JSON.stringify({ roomCode: this.roomCode, username: this.currentUser.username }));
+                    this.initPeer('zjh-' + this.roomCode);
+                }, 1000);
+            } else if (err.type === 'network' || err.type === 'server-error') {
+                this.waitLog('网络连接失败，请检查网络后重试');
             } else {
                 this.waitLog('错误: ' + err.type);
             }
+        });
+        this.peer.on('disconnected', () => {
+            console.log('房主Peer断开连接，尝试重连...');
+            this.waitLog('连接断开，正在重新连接...');
+            this.peer.reconnect();
         });
     }
 
     setupHostConn(conn) {
         conn.on('open', () => {
-            console.log('Client connected:', conn.peer);
+            console.log('客户端尝试连接:', conn.peer);
+            // 确保房间已完全就绪
+            if (!this.roomReady) {
+                console.log('房间未就绪，拒绝连接');
+                conn.send({ type: 'error', msg: '房间尚未准备好，请稍后重试' });
+                conn.close();
+                return;
+            }
         });
 
         conn.on('data', (msg) => {
@@ -301,6 +395,10 @@ class MultiplayerGame {
     // ==================== PeerJS：客户端 ====================
     setupClientConn(conn) {
         conn.on('open', () => {
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
             conn.send({ type: 'join', player: this.currentUser });
             this.waitLog('已连接，等待同步...');
         });
@@ -308,12 +406,20 @@ class MultiplayerGame {
         conn.on('data', (msg) => this.onMessage(msg));
 
         conn.on('close', () => {
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
             this.clearRoomState();
             this.waitLog('与房主的连接已断开');
             setTimeout(() => this.disconnect(), 2000);
         });
 
         conn.on('error', () => {
+            if (this.joinTimeout) {
+                clearTimeout(this.joinTimeout);
+                this.joinTimeout = null;
+            }
             this.clearRoomState();
             this.waitLog('连接出错');
         });
@@ -323,6 +429,10 @@ class MultiplayerGame {
     onMessage(msg) {
         switch (msg.type) {
             case 'room_info':
+                if (this.joinTimeout) {
+                    clearTimeout(this.joinTimeout);
+                    this.joinTimeout = null;
+                }
                 this.players = msg.players;
                 this.renderWaitingPlayers();
                 this.waitLog('已加入房间，准备开始');
@@ -362,6 +472,10 @@ class MultiplayerGame {
                 this.waitLog('房主正在准备新一局...');
                 break;
             case 'error':
+                if (this.joinTimeout) {
+                    clearTimeout(this.joinTimeout);
+                    this.joinTimeout = null;
+                }
                 this.clearRoomState();
                 this.waitLog(msg.msg);
                 break;
@@ -607,11 +721,17 @@ class MultiplayerGame {
     }
 
     disconnect() {
+        if (this.joinTimeout) {
+            clearTimeout(this.joinTimeout);
+            this.joinTimeout = null;
+        }
         if (this.conn) { try { this.conn.close(); } catch (e) {} }
         Object.values(this.conns).forEach(c => { try { c.close(); } catch (e) {} });
         if (this.peer) { try { this.peer.destroy(); } catch (e) {} }
         this.conn = null; this.conns = {}; this.peer = null;
         this.players = []; this.gameState = null;
+        this.roomReady = false;
+        this.joinRetryCount = 0;
         this.clearRoomState();
         this.showScreen('setup-screen');
     }
